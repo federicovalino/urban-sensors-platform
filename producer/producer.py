@@ -35,7 +35,7 @@ from confluent_kafka import KafkaException, Producer
 BOOTSTRAP_SERVERS = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 TOPIC = os.environ.get("KAFKA_TOPIC", "urban_sensors")
 INTERVAL_SECONDS = float(os.environ.get("PRODUCER_INTERVAL_SECONDS", "1"))
-SENSOR_COUNT = int(os.environ.get("SENSOR_COUNT", "6"))
+SENSOR_COUNT = int(os.environ.get("SENSOR_COUNT", "12"))
 NULL_RATE = float(os.environ.get("NULL_RATE", "0.05"))
 HEARTBEAT_FILE = Path(os.environ.get("HEARTBEAT_FILE", "/tmp/heartbeat"))
 
@@ -114,6 +114,9 @@ def main() -> None:
         "bootstrap.servers": BOOTSTRAP_SERVERS,
         "client.id": "sensor-producer",
         "acks": "all",
+        # Mismo algoritmo de hash que el cliente Java de Kafka (murmur2).
+        # El default de librdkafka (CRC32) dejaba la partición 0 sin datos con estos sensor_id.
+        "partitioner": "murmur2_random",
     })
 
     partitions = wait_for_topic(producer)

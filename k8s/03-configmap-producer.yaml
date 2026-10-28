@@ -9,6 +9,6 @@ metadata:
     app.kubernetes.io/part-of: urban-sensors-platform
 data:
   PRODUCER_INTERVAL_SECONDS: "1"   # un mensaje por segundo
-  SENSOR_COUNT: "6"                # sensores simulados (sensor-01 ... sensor-06)
+  SENSOR_COUNT: "12"               # sensores simulados (sensor-01 ... sensor-12): 3 / 6 / 3 por partición
   NULL_RATE: "0.05"                # 5 % de lecturas con un campo nulo (lo filtra Spark)
   LOG_LEVEL: "INFO"
