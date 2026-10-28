@@ -1,0 +1,40 @@
+# ---------------------------------------------------------------------------
+# Services de Kafka
+#   kafka-headless -> DNS estable por Pod (kafka-0.kafka-headless...), lo usa
+#                     el StatefulSet y es la dirección "advertised" del broker.
+#   kafka          -> punto de entrada (bootstrap) para producer, Spark y el Job.
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-headless
+  namespace: urban-sensors
+  labels:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/part-of: urban-sensors-platform
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true   # el DNS del Pod existe aunque todavía no esté Ready
+  selector:
+    app.kubernetes.io/name: kafka
+  ports:
+    - name: broker
+      port: 9092
+      targetPort: broker
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: urban-sensors
+  labels:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/part-of: urban-sensors-platform
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: kafka
+  ports:
+    - name: broker
+      port: 9092
+      targetPort: broker

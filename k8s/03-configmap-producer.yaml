@@ -1,0 +1,14 @@
+# Parámetros de la simulación de sensores urbanos.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: producer-config
+  namespace: urban-sensors
+  labels:
+    app.kubernetes.io/name: sensor-producer
+    app.kubernetes.io/part-of: urban-sensors-platform
+data:
+  PRODUCER_INTERVAL_SECONDS: "1"   # un mensaje por segundo
+  SENSOR_COUNT: "6"                # sensores simulados (sensor-01 ... sensor-06)
+  NULL_RATE: "0.05"                # 5 % de lecturas con un campo nulo (lo filtra Spark)
+  LOG_LEVEL: "INFO"

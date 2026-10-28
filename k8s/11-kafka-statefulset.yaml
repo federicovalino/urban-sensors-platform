@@ -1,0 +1,66 @@
+# ---------------------------------------------------------------------------
+# Broker de Kafka (KRaft) como StatefulSet: identidad estable (kafka-0) y DNS
+# fijo, que es lo que necesita un componente con estado como un broker.
+# ---------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  namespace: urban-sensors
+  labels:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/part-of: urban-sensors-platform
+spec:
+  serviceName: kafka-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kafka
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kafka
+        app.kubernetes.io/part-of: urban-sensors-platform
+    spec:
+      # Evita que Kubernetes inyecte variables KAFKA_SERVICE_HOST, KAFKA_PORT...
+      # (por el Service "kafka"): la imagen las interpretaría como propiedades.
+      enableServiceLinks: false
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: kafka
+          image: apache/kafka:3.9.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: broker
+              containerPort: 9092
+            - name: controller
+              containerPort: 9093
+          envFrom:
+            - configMapRef:
+                name: kafka-broker-config
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "768Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          readinessProbe:
+            tcpSocket:
+              port: broker
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: broker
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/kafka/data
+      volumes:
+        # Entorno de desarrollo: datos efímeros. En producción: volumeClaimTemplates (PVC).
+        - name: data
+          emptyDir: {}

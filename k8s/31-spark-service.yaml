@@ -1,0 +1,18 @@
+# Service interno para la Spark UI (jobs, stages, tasks, streaming).
+# Acceso local: kubectl port-forward -n urban-sensors svc/spark-ui 4040:4040
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-ui
+  namespace: urban-sensors
+  labels:
+    app.kubernetes.io/name: spark-streaming
+    app.kubernetes.io/part-of: urban-sensors-platform
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: spark-streaming
+  ports:
+    - name: spark-ui
+      port: 4040
+      targetPort: spark-ui

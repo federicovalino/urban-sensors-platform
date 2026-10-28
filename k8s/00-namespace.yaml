@@ -1,0 +1,8 @@
+# Namespace dedicado: aísla todos los recursos de la plataforma.
+# Limpieza total: kubectl delete namespace urban-sensors
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: urban-sensors
+  labels:
+    app.kubernetes.io/part-of: urban-sensors-platform

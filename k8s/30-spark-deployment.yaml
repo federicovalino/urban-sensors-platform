@@ -1,0 +1,77 @@
+# ---------------------------------------------------------------------------
+# Job de Spark Structured Streaming como Deployment.
+# Corre en modo local[3]: el Driver y 3 hilos de ejecución dentro del Pod,
+# una task por partición de urban_sensors en cada micro-batch.
+# ---------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-streaming
+  namespace: urban-sensors
+  labels:
+    app.kubernetes.io/name: spark-streaming
+    app.kubernetes.io/part-of: urban-sensors-platform
+spec:
+  replicas: 1          # un job de streaming = una sola instancia del Driver
+  strategy:
+    type: Recreate     # nunca dos Drivers a la vez sobre el mismo checkpoint
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: spark-streaming
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: spark-streaming
+        app.kubernetes.io/part-of: urban-sensors-platform
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: spark
+          image: urban-sensors/spark-job:1.0   # imagen local (docker build), ver README
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: pipeline-config
+            - configMapRef:
+                name: spark-config
+          command: ["/opt/spark/bin/spark-submit"]
+          args:
+            - "--master"
+            - "$(SPARK_MASTER)"
+            - "--driver-memory"
+            - "$(SPARK_DRIVER_MEMORY)"
+            - "--conf"
+            - "spark.sql.shuffle.partitions=$(SPARK_SHUFFLE_PARTITIONS)"
+            - "--conf"
+            - "spark.ui.port=4040"
+            - "/opt/app/streaming_job.py"
+          ports:
+            - name: spark-ui
+              containerPort: 4040
+          # La JVM de Spark necesita margen: driver-memory (768m) + overhead < limit.
+          # Sin limits definidos, el Pod puede ser expulsado (evicted) por presión de memoria.
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1500m"
+              memory: "1536Mi"
+          # La Spark UI vive mientras el Driver esté vivo
+          readinessProbe:
+            tcpSocket:
+              port: spark-ui
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: spark-ui
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
+          volumeMounts:
+            - name: checkpoints
+              mountPath: /tmp/checkpoints
+      volumes:
+        - name: checkpoints
+          emptyDir: {}

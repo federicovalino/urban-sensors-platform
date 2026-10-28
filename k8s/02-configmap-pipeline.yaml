@@ -1,0 +1,17 @@
+# ---------------------------------------------------------------------------
+# Configuración compartida del pipeline: dónde está Kafka y qué tópico usar.
+# La consumen el Job que crea el tópico, el producer y el job de Spark.
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pipeline-config
+  namespace: urban-sensors
+  labels:
+    app.kubernetes.io/part-of: urban-sensors-platform
+data:
+  # DNS del Service de Kafka dentro del clúster (nunca localhost)
+  KAFKA_BOOTSTRAP_SERVERS: "kafka.urban-sensors.svc.cluster.local:9092"
+  KAFKA_TOPIC: "urban_sensors"
+  KAFKA_TOPIC_PARTITIONS: "3"
+  KAFKA_TOPIC_REPLICATION_FACTOR: "1"

@@ -1,0 +1,50 @@
+# ---------------------------------------------------------------------------
+# Job: crea el tópico urban_sensors con 3 particiones ANTES de que el producer
+# escriba. Espera a que el broker responda (reintenta) y termina.
+# ---------------------------------------------------------------------------
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-topic-init
+  namespace: urban-sensors
+  labels:
+    app.kubernetes.io/name: kafka-topic-init
+    app.kubernetes.io/part-of: urban-sensors-platform
+spec:
+  backoffLimit: 4
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kafka-topic-init
+    spec:
+      restartPolicy: OnFailure
+      enableServiceLinks: false
+      containers:
+        - name: create-topic
+          image: apache/kafka:3.9.1
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: pipeline-config
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Esperando al broker en $KAFKA_BOOTSTRAP_SERVERS ..."
+              until /opt/kafka/bin/kafka-topics.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" --list > /dev/null 2>&1; do
+                sleep 5
+              done
+              /opt/kafka/bin/kafka-topics.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" \
+                --create --if-not-exists \
+                --topic "$KAFKA_TOPIC" \
+                --partitions "$KAFKA_TOPIC_PARTITIONS" \
+                --replication-factor "$KAFKA_TOPIC_REPLICATION_FACTOR"
+              /opt/kafka/bin/kafka-topics.sh --bootstrap-server "$KAFKA_BOOTSTRAP_SERVERS" \
+                --describe --topic "$KAFKA_TOPIC"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

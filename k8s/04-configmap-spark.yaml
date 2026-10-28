@@ -1,0 +1,18 @@
+# Parámetros del job de Spark Structured Streaming.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spark-config
+  namespace: urban-sensors
+  labels:
+    app.kubernetes.io/name: spark-streaming
+    app.kubernetes.io/part-of: urban-sensors-platform
+data:
+  SPARK_MASTER: "local[3]"              # Driver + 3 hilos de ejecución (1 por partición)
+  SPARK_DRIVER_MEMORY: "768m"           # por debajo del limit del Pod (1536Mi) para evitar OOMKilled
+  SPARK_SHUFFLE_PARTITIONS: "3"
+  WINDOW_DURATION: "1 minute"           # ventana de agregación (requisito)
+  WATERMARK_DELAY: "30 seconds"         # tolerancia a eventos atrasados
+  TRIGGER_INTERVAL: "15 seconds"        # frecuencia de cada micro-batch
+  STARTING_OFFSETS: "latest"
+  CHECKPOINT_DIR: "/tmp/checkpoints"

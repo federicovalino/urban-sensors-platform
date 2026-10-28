@@ -1,0 +1,56 @@
+# ---------------------------------------------------------------------------
+# Producer: simula los sensores urbanos y publica en urban_sensors.
+# Configuración 100 % por ConfigMaps (pipeline-config + producer-config).
+# ---------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sensor-producer
+  namespace: urban-sensors
+  labels:
+    app.kubernetes.io/name: sensor-producer
+    app.kubernetes.io/part-of: urban-sensors-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sensor-producer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sensor-producer
+        app.kubernetes.io/part-of: urban-sensors-platform
+    spec:
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: producer
+          image: urban-sensors/producer:1.0   # imagen local (docker build), ver README
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: pipeline-config
+            - configMapRef:
+                name: producer-config
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+          # El loop actualiza /tmp/heartbeat en cada envío. Si pasan más de
+          # 30 s sin actualizarse (proceso colgado), Kubernetes reinicia el contenedor.
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - test -f /tmp/heartbeat && [ $(( $(date +%s) - $(stat -c %Y /tmp/heartbeat) )) -lt 30 ]
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 3
