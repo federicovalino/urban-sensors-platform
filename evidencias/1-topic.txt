@@ -1,7 +1,0 @@
-﻿Esperando al broker en kafka.urban-sensors.svc.cluster.local:9092 ...
-WARNING: Due to limitations in metric names, topics with a period ('.') or underscore ('_') could collide. To avoid issues it is best to use either, but not both.
-Created topic urban_sensors.
-Topic: urban_sensors	TopicId: zProRdqbQD2UI4a4R3Slkg	PartitionCount: 3	ReplicationFactor: 1	Configs: 
-	Topic: urban_sensors	Partition: 0	Leader: 1	Replicas: 1	Isr: 1	Elr: 	LastKnownElr: 
-	Topic: urban_sensors	Partition: 1	Leader: 1	Replicas: 1	Isr: 1	Elr: 	LastKnownElr: 
-	Topic: urban_sensors	Partition: 2	Leader: 1	Replicas: 1	Isr: 1	Elr: 	LastKnownElr: 

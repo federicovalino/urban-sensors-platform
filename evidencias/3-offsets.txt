@@ -1,3 +1,0 @@
-﻿urban_sensors:0:85
-urban_sensors:1:489
-urban_sensors:2:447
